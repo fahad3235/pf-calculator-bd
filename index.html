@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PF Calculator BD — Provident Fund Planner</title>
+<meta name="description" content="Offline bilingual Provident Fund calculator for Bangladesh: maturity projection, employer-match comparison, year-by-year schedule, saved scenarios.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="app-header">
+  <div class="header-inner">
+    <div>
+      <h1 data-i18n="appTitle">PF Calculator BD</h1>
+      <p class="subtitle" data-i18n="appSubtitle">Provident Fund maturity &amp; growth planner for Bangladesh</p>
+    </div>
+    <button id="lang-toggle" class="btn lang-btn" type="button">বাংলা</button>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab-btn active" data-tab="calc" type="button" data-i18n="tabCalc">Calculator</button>
+    <button class="tab-btn" data-tab="scenarios" type="button" data-i18n="tabScenarios">My Scenarios</button>
+    <button class="tab-btn" data-tab="guide" type="button" data-i18n="tabGuide">Guide</button>
+  </nav>
+</header>
+
+<main>
+  <!-- Calculator tab -->
+  <section id="tab-calc" class="tab-panel">
+    <div class="grid">
+      <div class="card">
+        <h2 data-i18n="secInputs">Your PF details</h2>
+        <form id="pf-form" novalidate>
+          <label for="basic" data-i18n="lblBasic">Monthly basic salary (৳)</label>
+          <input id="basic" type="number" min="1" max="10000000" step="1" inputmode="numeric" value="50000">
+          <p class="err" id="err-basic" aria-live="polite"></p>
+
+          <label for="empPct" data-i18n="lblEmpPct">Your contribution (% of basic)</label>
+          <input id="empPct" type="number" min="0" max="50" step="0.5" inputmode="decimal" value="10">
+          <p class="err" id="err-empPct" aria-live="polite"></p>
+
+          <label for="erPct" data-i18n="lblErPct">Employer contribution (% of basic)</label>
+          <input id="erPct" type="number" min="0" max="50" step="0.5" inputmode="decimal" value="10">
+          <p class="err" id="err-erPct" aria-live="polite"></p>
+
+          <label for="ratePct" data-i18n="lblRate">Annual interest rate (%)</label>
+          <input id="ratePct" type="number" min="0" max="25" step="0.1" inputmode="decimal" value="8.5">
+          <p class="err" id="err-ratePct" aria-live="polite"></p>
+
+          <label for="years" data-i18n="lblYears">Years to maturity</label>
+          <input id="years" type="number" min="1" max="40" step="1" inputmode="numeric" value="10">
+          <p class="err" id="err-years" aria-live="polite"></p>
+
+          <label for="incrementPct" data-i18n="lblIncrement">Annual salary increment (%)</label>
+          <input id="incrementPct" type="number" min="0" max="20" step="0.5" inputmode="decimal" value="5">
+          <p class="err" id="err-incrementPct" aria-live="polite"></p>
+
+          <label for="opening" data-i18n="lblOpening">Current PF balance (৳, optional)</label>
+          <input id="opening" type="number" min="0" max="100000000" step="1" inputmode="numeric" value="0">
+          <p class="err" id="err-opening" aria-live="polite"></p>
+
+          <div class="presets">
+            <span data-i18n="presets">Quick presets</span>
+            <button type="button" class="btn small" data-preset="10/10" data-i18n="presetStd">Standard 10% + 10%</button>
+            <button type="button" class="btn small" data-preset="12/12" data-i18n="presetHigh">Higher 12% + 12%</button>
+            <button type="button" class="btn small" data-preset="5/5" data-i18n="presetLow">Starter 5% + 5%</button>
+          </div>
+
+          <div class="form-actions">
+            <button id="btn-calc" class="btn primary" type="button" data-i18n="btnCalc">Calculate</button>
+            <button id="btn-reset" class="btn" type="button" data-i18n="btnReset">Reset</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2 data-i18n="secResults">Your projection</h2>
+        <p id="empty-results" class="empty" data-i18n="emptyResults">Enter your details and press Calculate to see your projection.</p>
+        <div id="results" hidden>
+          <div class="hero-result">
+            <span data-i18n="resMaturity">Maturity value</span>
+            <strong id="res-maturity">৳0.00</strong>
+          </div>
+          <dl class="result-grid">
+            <div><dt data-i18n="resEmp">Your contributions</dt><dd id="res-emp">৳0.00</dd></div>
+            <div><dt data-i18n="resEr">Employer contributions</dt><dd id="res-er">৳0.00</dd></div>
+            <div><dt data-i18n="resInterest">Interest earned</dt><dd id="res-interest">৳0.00</dd></div>
+            <div><dt data-i18n="resContrib">Total contributions</dt><dd id="res-contrib">৳0.00</dd></div>
+            <div><dt data-i18n="resMonthly">Monthly contribution (year 1)</dt><dd id="res-monthly">৳0.00</dd></div>
+          </dl>
+
+          <div class="compare">
+            <h3 data-i18n="compareTitle">What if there was no employer match?</h3>
+            <div class="compare-row">
+              <span data-i18n="compareWith">With employer match</span>
+              <strong id="cmp-with">৳0.00</strong>
+            </div>
+            <div class="compare-row">
+              <span data-i18n="compareWithout">Employee only</span>
+              <strong id="cmp-without">৳0.00</strong>
+            </div>
+            <div class="compare-row highlight">
+              <span data-i18n="compareDiff">Employer match adds</span>
+              <strong id="cmp-diff">৳0.00</strong>
+            </div>
+          </div>
+
+          <h3 data-i18n="scheduleTitle">Year-by-year schedule</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="colYear">Year</th>
+                  <th data-i18n="colOpening">Opening</th>
+                  <th data-i18n="colEmp">You pay</th>
+                  <th data-i18n="colEr">Employer pays</th>
+                  <th data-i18n="colInterest">Interest</th>
+                  <th data-i18n="colClosing">Closing</th>
+                </tr>
+              </thead>
+              <tbody id="schedule-body"></tbody>
+            </table>
+          </div>
+          <p class="note" data-i18n="calcNote">Estimate only — interest rate and PF rules vary by employer. Verify with HR.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scenarios tab -->
+  <section id="tab-scenarios" class="tab-panel" hidden>
+    <div class="card">
+      <h2 data-i18n="secScenarios">Saved scenarios</h2>
+      <label for="scenario-name" data-i18n="lblScenarioName">Scenario name</label>
+      <input id="scenario-name" type="text" maxlength="60" data-i18n-ph="phScenarioName" placeholder="e.g. My PF at 35">
+      <div class="form-actions">
+        <button id="btn-save-scenario" class="btn primary" type="button" data-i18n="btnSaveScenario">Save current inputs</button>
+        <button id="btn-export" class="btn" type="button" data-i18n="btnExport">Export JSON</button>
+        <button id="btn-import" class="btn" type="button" data-i18n="btnImport">Import JSON</button>
+        <input id="import-file" type="file" accept="application/json,.json" hidden>
+      </div>
+      <p id="scenario-msg" class="msg" aria-live="polite"></p>
+      <p id="empty-scenarios" class="empty" data-i18n="emptyScenarios">No saved scenarios yet. Save your current inputs to compare plans later.</p>
+      <div id="scenario-list"></div>
+      <hr>
+      <h3 data-i18n="eraseTitle">Danger zone</h3>
+      <p data-i18n="eraseHint">Type DELETE to erase all saved scenarios.</p>
+      <input id="erase-confirm" type="text" placeholder="DELETE" autocomplete="off">
+      <button id="btn-erase" class="btn danger" type="button" data-i18n="btnErase">Erase all</button>
+    </div>
+  </section>
+
+  <!-- Guide tab -->
+  <section id="tab-guide" class="tab-panel" hidden>
+    <div class="card">
+      <h2 data-i18n="guideTitle">How Provident Fund works</h2>
+      <p data-i18n="guide1">Provident Fund (PF) is a retirement savings scheme: every month a percentage of your basic salary goes into the fund, and your employer usually adds the same percentage on top.</p>
+      <p data-i18n="guide2">The fund earns interest, compounded monthly in this calculator. Your balance grows from three parts: what you pay, what your employer pays, and the interest on both.</p>
+      <p data-i18n="guide3">This tool is a planning estimate. Real PF rules, interest rates and tax treatment vary by employer and scheme (government, private, or company-run fund). Confirm the exact rate and rules with your HR or fund office before making decisions.</p>
+      <h3 data-i18n="guideFormula">How the numbers are worked out</h3>
+      <p data-i18n="guideFormulaText">Each month: your contribution + employer contribution are added to the balance, then one month of interest (annual rate ÷ 12) is added on the new balance. Your basic salary grows by the annual increment % at the start of each year after year 1. All amounts are rounded to the paisa (৳0.01) each month.</p>
+      <p class="note" data-i18n="guideNote">This is a planning tool, not financial advice. Rates shown are the ones you enter — no official rate is assumed.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p data-i18n="footer">Offline tool · Your data stays on your device · PF Calculator BD</p>
+</footer>
+
+<script src="js/logic.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
